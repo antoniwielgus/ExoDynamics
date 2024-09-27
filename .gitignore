@@ -6,6 +6,13 @@
 *.ko
 *.obj
 *.elf
+*.bin
+*.hex
+*.map
+*.lst
+*.out
+*.a
+*.axf
 
 # Linker output
 *.ilk
@@ -41,6 +48,9 @@
 *.su
 *.idb
 *.pdb
+*.d
+*.dep
+*.log
 
 # Kernel Module Compile Results
 *.mod*
@@ -50,3 +60,17 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+
+# PlatformIO
+.pio/
+.vscode/
+.clang/
+
+
+# STM32CubeMX
+*.ioc
+*.launch
+.mxproject/
+.cproject
+.project/
