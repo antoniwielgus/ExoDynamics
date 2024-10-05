@@ -69,7 +69,6 @@ dkms.conf
 
 
 # STM32CubeMX
-*.ioc
 *.launch
 .mxproject/
 .cproject
