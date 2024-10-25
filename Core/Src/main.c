@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "can_handler.h"
+#include "AK80_64_driver.h"
 
 /* USER CODE END Includes */
 
@@ -101,9 +102,18 @@ int main(void)
 
   CanHandler motor1;
   initCanHandler(&motor1, 8, 0x02, CAN_ID_STD, CAN_RTR_DATA, 0x2, DISABLE);
-  canStart(&hcan1);
-  uint8_t frame[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC};
+  HAL_CAN_Start(&hcan1);
+  
+  startEngine(&hcan1, &motor1);
+  HAL_Delay(1000);
+
+  uint8_t frame[8];
+
+  set_motor_possition(frame, 0.0f, 6.28f, 0.0f, 0.5f, 0.0f);
   sendCanFrame(&hcan1, &motor1, frame);
+
+  HAL_Delay(3000);
+  stopEngine(&hcan1, &motor1);
 
   while (1)
   {

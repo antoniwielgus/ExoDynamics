@@ -27,10 +27,6 @@ void initCanHandler(CanHandler* can_handler, uint32_t dlc, uint32_t ext_id, uint
     can_handler->txHeader.TransmitGlobalTime = transmit_global_time;
 }
 
-void canStart(CAN_HandleTypeDef* hcan_)
-{
-    HAL_CAN_Start(hcan_);
-}
 
 void sendCanFrame(CAN_HandleTypeDef* hcan_, CanHandler* can_handler, uint8_t* frame)
 {
