@@ -60,12 +60,22 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+CanHandler motor1;
+
+uint8_t serial_received_data[23];
+
+union
+{
+  uint8_t char_array[4];
+  float float_value;
+} char_array_to_float;
+
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
@@ -100,26 +110,43 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  CanHandler motor1;
   initCanHandler(&motor1, 8, 0x02, CAN_ID_STD, CAN_RTR_DATA, 0x2, DISABLE);
   HAL_CAN_Start(&hcan1);
-  
-  startEngine(&hcan1, &motor1);
-  HAL_Delay(1000);
 
-  uint8_t frame[8];
+  // startEngine(&hcan1, &motor1);
+  // HAL_Delay(1000);
 
-  set_motor_possition(frame, 0.0f, 6.28f, 0.0f, 0.5f, 0.0f);
-  sendCanFrame(&hcan1, &motor1, frame);
+  // uint8_t frame[8];
 
-  HAL_Delay(3000);
-  stopEngine(&hcan1, &motor1);
+  // set_motor_possition(frame, 3.0f, 0.00f, 1.8f, 0.0f, 0.0f);
+  // sendCanFrame(&hcan1, &motor1, frame);
+
+  // HAL_Delay(3000);
+  // set_motor_possition(frame, 0.0f, 0.00f, 1.8f, 0.0f, 0.0f);
+  // sendCanFrame(&hcan1, &motor1, frame);
+  // HAL_Delay(3000);
+  // stopEngine(&hcan1, &motor1);
+
+  HAL_UART_Receive_IT(&huart1, serial_received_data, 23);
 
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_14);
-    HAL_Delay(500);
-    HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_13);
+
+    // HAL_UART_Receive(&huart1, &command, 1, 10);
+    // HAL_UART_Receive(&huart1, received, 19, 10);
+
+    // if (command == 'A')
+    // {
+    //   startEngine(&hcan1, &motor1);
+    //   HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_SET);
+    // }
+
+    // else if (command == 'B')
+    // {
+    //   stopEngine(&hcan1, &motor1);
+    //   HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_RESET);
+    // }
 
     /* USER CODE END WHILE */
 
@@ -129,22 +156,22 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -159,16 +186,15 @@ void SystemClock_Config(void)
   }
 
   /** Activate the Over-Drive mode
-  */
+   */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -182,12 +208,64 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1)
+  {
+    float p_des, v_des, kp, kd, t_ff;
+
+    if (serial_received_data[1] == 0x02)
+    {
+      int i = 1;
+      int start = i;
+
+      for (; i < start + 4; i++)
+        char_array_to_float.char_array[i - start] = serial_received_data[i];
+      start = i;
+      p_des = char_array_to_float.float_value;
+
+      for (; i < start + 4; i++)
+        char_array_to_float.char_array[i - start] = serial_received_data[i];
+      start = i;
+      v_des = char_array_to_float.float_value;
+
+      for (; i < start + 4; i++)
+        char_array_to_float.char_array[i - start] = serial_received_data[i];
+      start = i;
+      kp = char_array_to_float.float_value;
+
+      for (; i < start + 4; i++)
+        char_array_to_float.char_array[i - start] = serial_received_data[i];
+      start = i;
+      kd = char_array_to_float.float_value;
+
+      for (; i < start + 4; i++)
+        char_array_to_float.char_array[i - start] = serial_received_data[i];
+      start = i;
+      t_ff = char_array_to_float.float_value;
+
+      uint8_t frame[8];
+      set_motor_possition(frame, p_des, v_des, kp, kd, t_ff);
+      sendCanFrame(&hcan1, &motor1, frame);
+
+      // set_motor_possition(frame, 0.0f, 6.28f, 0.0f, 0.5f, 0.0f);
+      // sendCanFrame(&hcan1, &motor1, frame);
+    }
+    else if (serial_received_data[1] == 0x01) // start motor
+      startEngine(&hcan1, &motor1);
+    else if (serial_received_data[1] == 0x00) // stop motor
+      stopEngine(&hcan1, &motor1);
+
+    HAL_UART_Receive_IT(&huart1, serial_received_data, 23);
+  }
+}
+
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -199,14 +277,14 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
