@@ -28,6 +28,9 @@
 #include "can_handler.h"
 #include "AK80_64_driver.h"
 
+#include <stdio.h>
+#include <string.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,9 +76,9 @@ union
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
@@ -103,6 +106,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_CAN1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -127,11 +131,13 @@ int main(void)
   // HAL_Delay(3000);
   // stopEngine(&hcan1, &motor1);
 
-  HAL_UART_Receive_IT(&huart1, serial_received_data, 23);
+  HAL_UART_Receive_IT(&huart2, serial_received_data, 23);
 
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_14);
+
+    // HAL_UART_Transmit(&huart1, "hello world\n\r", 13, HAL_MAX_DELAY);
 
     // HAL_UART_Receive(&huart1, &command, 1, 10);
     // HAL_UART_Receive(&huart1, received, 19, 10);
@@ -156,22 +162,22 @@ int main(void)
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-   */
+  */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
+  * in the RCC_OscInitTypeDef structure.
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -186,15 +192,16 @@ void SystemClock_Config(void)
   }
 
   /** Activate the Over-Drive mode
-   */
+  */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -210,13 +217,14 @@ void SystemClock_Config(void)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  if (huart->Instance == USART1)
+  if (huart->Instance == USART2)
   {
     float p_des, v_des, kp, kd, t_ff;
 
+    // if serial_received_data[1] == 0x01 this means that motor is running
     if (serial_received_data[1] == 0x02)
     {
-      int i = 1;
+      int i = 2;
       int start = i;
 
       for (; i < start + 4; i++)
@@ -244,6 +252,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       start = i;
       t_ff = char_array_to_float.float_value;
 
+
+
+
+
+      char msg[64];
+      sprintf((char*)msg, "p: %d\n\r", p_des);
+      HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 1000);
+      
+
       uint8_t frame[8];
       set_motor_possition(frame, p_des, v_des, kp, kd, t_ff);
       sendCanFrame(&hcan1, &motor1, frame);
@@ -256,16 +273,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     else if (serial_received_data[1] == 0x00) // stop motor
       stopEngine(&hcan1, &motor1);
 
-    HAL_UART_Receive_IT(&huart1, serial_received_data, 23);
+    HAL_UART_Receive_IT(&huart2, serial_received_data, 23);
   }
 }
 
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -277,14 +294,14 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
+#ifdef  USE_FULL_ASSERT
 /**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
