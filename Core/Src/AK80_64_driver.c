@@ -5,6 +5,7 @@
  */
 
 #include "AK80_64_driver.h"
+#include "main.h"
 
 
 uint8_t startMotor[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC};
@@ -31,20 +32,20 @@ union float_uint16t
 void startEngine(CAN_HandleTypeDef* hcan_, CanHandler* can_handler)
 {
     //in reserve send this twice
-    sendCanFrame(hcan_, can_handler, startMotor);
-    sendCanFrame(hcan_, can_handler, startMotor);
+    sendCanFrame(hcan_, can_id, can_handler, startMotor);
+    sendCanFrame(hcan_, can_id, can_handler, startMotor);
 }
 
 void stopEngine(CAN_HandleTypeDef* hcan_, CanHandler* can_handler)
 {
-    sendCanFrame(hcan_, can_handler, stopMotor);
-    sendCanFrame(hcan_, can_handler, stopMotor);
-    sendCanFrame(hcan_, can_handler, stopMotor);
+    sendCanFrame(hcan_, can_id, can_handler, stopMotor);
+    sendCanFrame(hcan_, can_id, can_handler, stopMotor);
+    sendCanFrame(hcan_, can_id, can_handler, stopMotor);
 }
 
 void engineDataSendRequest(CAN_HandleTypeDef* hcan_, CanHandler* can_handler)
 {
-    sendCanFrame(hcan_, can_handler, motorData);
+    sendCanFrame(hcan_, can_id, can_handler, motorData);
 }
 
 int float_to_uint(float x, float x_min, float x_max, unsigned int bits)

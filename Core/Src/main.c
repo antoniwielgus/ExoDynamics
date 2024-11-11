@@ -64,6 +64,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 CanHandler motor1;
+uint8_t can_id = 0;
 
 uint8_t serial_received_data[23];
 
@@ -114,45 +115,14 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  initCanHandler(&motor1, 8, 0x02, CAN_ID_STD, CAN_RTR_DATA, 0x2, DISABLE);
+  initCanHandler(&motor1, 8, can_id, CAN_ID_STD, CAN_RTR_DATA, can_id, DISABLE);
   HAL_CAN_Start(&hcan1);
-
-  // startEngine(&hcan1, &motor1);
-  // HAL_Delay(1000);
-
-  // uint8_t frame[8];
-
-  // set_motor_possition(frame, 3.0f, 0.00f, 1.8f, 0.0f, 0.0f);
-  // sendCanFrame(&hcan1, &motor1, frame);
-
-  // HAL_Delay(3000);
-  // set_motor_possition(frame, 0.0f, 0.00f, 1.8f, 0.0f, 0.0f);
-  // sendCanFrame(&hcan1, &motor1, frame);
-  // HAL_Delay(3000);
-  // stopEngine(&hcan1, &motor1);
 
   HAL_UART_Receive_IT(&huart2, serial_received_data, 23);
 
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_14);
-
-    // HAL_UART_Transmit(&huart1, "hello world\n\r", 13, HAL_MAX_DELAY);
-
-    // HAL_UART_Receive(&huart1, &command, 1, 10);
-    // HAL_UART_Receive(&huart1, received, 19, 10);
-
-    // if (command == 'A')
-    // {
-    //   startEngine(&hcan1, &motor1);
-    //   HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_SET);
-    // }
-
-    // else if (command == 'B')
-    // {
-    //   stopEngine(&hcan1, &motor1);
-    //   HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_RESET);
-    // }
 
     /* USER CODE END WHILE */
 
@@ -219,6 +189,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart->Instance == USART2)
   {
+    can_id = serial_received_data[0];
+    char msg[10];
+    sprintf(msg, "Can id: %d", can_id);
+    HAL_UART_Transmit(&huart1, msg, 10, HAL_MAX_DELAY);
+
     float p_des, v_des, kp, kd, t_ff;
 
     // if serial_received_data[1] == 0x01 this means that motor is running
@@ -263,7 +238,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
       uint8_t frame[8];
       set_motor_possition(frame, p_des, v_des, kp, kd, t_ff);
-      sendCanFrame(&hcan1, &motor1, frame);
+      sendCanFrame(&hcan1, can_id, &motor1, frame);
 
       // set_motor_possition(frame, 0.0f, 6.28f, 0.0f, 0.5f, 0.0f);
       // sendCanFrame(&hcan1, &motor1, frame);

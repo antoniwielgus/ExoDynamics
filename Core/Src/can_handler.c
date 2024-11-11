@@ -28,8 +28,11 @@ void initCanHandler(CanHandler* can_handler, uint32_t dlc, uint32_t ext_id, uint
 }
 
 
-void sendCanFrame(CAN_HandleTypeDef* hcan_, CanHandler* can_handler, uint8_t* frame)
+void sendCanFrame(CAN_HandleTypeDef* hcan_, uint8_t can_id, CanHandler* can_handler, uint8_t* frame)
 {
+    can_handler->txHeader.ExtId = can_id;
+    can_handler->txHeader.StdId = can_id;
+
     HAL_CAN_AddTxMessage(hcan_, &can_handler->txHeader, frame, &can_handler->txMailbox);
 }
 

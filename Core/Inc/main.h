@@ -60,6 +60,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+extern uint8_t can_id;
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
