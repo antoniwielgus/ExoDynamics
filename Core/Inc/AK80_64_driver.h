@@ -17,7 +17,7 @@ void startEngine(CAN_HandleTypeDef* hcan_, CanHandler* can_handler);
 void stopEngine(CAN_HandleTypeDef* hcan_, CanHandler* can_handler);
 void engineDataSendRequest(CAN_HandleTypeDef* hcan_, CanHandler* can_handler);
 
-int float_to_uint(float x, float x_min, float x_max, unsigned int bits);
+int32_t float_to_uint(float x, float x_min, float x_max, uint8_t bits);
 void set_motor_possition(uint8_t* buffer, float p_des, float v_des, float kp, float kd, float t_ff);
 void setPossition(uint8_t* buffer, float possition, float speed, float KP, float KD, float torque);
 

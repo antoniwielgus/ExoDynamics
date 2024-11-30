@@ -48,7 +48,7 @@ void engineDataSendRequest(CAN_HandleTypeDef* hcan_, CanHandler* can_handler)
     sendCanFrame(hcan_, can_id, can_handler, motorData);
 }
 
-int float_to_uint(float x, float x_min, float x_max, unsigned int bits)
+int32_t float_to_uint(float x, float x_min, float x_max, uint8_t bits)
 {
 	float span = x_max - x_min;
 
@@ -57,7 +57,7 @@ int float_to_uint(float x, float x_min, float x_max, unsigned int bits)
 	else if (x > x_max)
 		x = x_max;
 
-	return (int)((x - x_min) * ((float)((1 << bits) / span)));
+	return (int32_t)((x - x_min) * ((float)((1 << bits) / span)));
 }
 
 void set_motor_possition(uint8_t* buffer, float p_des, float v_des, float kp, float kd, float t_ff)
@@ -80,15 +80,15 @@ void set_motor_possition(uint8_t* buffer, float p_des, float v_des, float kp, fl
 	kd = fminf(fmaxf(Kd_MIN, kd), Kd_MAX);
 	t_ff = fminf(fmaxf(T_MIN, t_ff), T_MAX);
 
-	int p_int = float_to_uint(p_des, P_MIN, P_MAX, 16);
-	int v_int = float_to_uint(v_des, V_MIN, V_MAX, 12);
-	int kp_int = float_to_uint(kp, Kp_MIN, Kp_MAX, 12);
-	int kd_int = float_to_uint(kd, Kd_MIN, Kd_MAX, 12);
-	int t_int = float_to_uint(t_ff, T_MIN, T_MAX, 12);
+	int32_t p_int = float_to_uint(p_des, P_MIN, P_MAX, 16);
+	int32_t v_int = float_to_uint(v_des, V_MIN, V_MAX, 12);
+	int32_t kp_int = float_to_uint(kp, Kp_MIN, Kp_MAX, 12);
+	int32_t kd_int = float_to_uint(kd, Kd_MIN, Kd_MAX, 12);
+	int32_t t_int = float_to_uint(t_ff, T_MIN, T_MAX, 12);
 
 	buffer[0] = p_int>>8; 						// Position High 8
 	buffer[1] = p_int&0xFF; 					// Position Low 8
-	buffer[2] = v_int>>4; 						// Speed High 8 bits
+	buffer[2] = v_int>>4; 			 			// Speed High 8 bits
 	buffer[3] = ((v_int&0xF)<<4)|(kp_int>>8); 	// Speed Low 4 bits KP High 4 bits
 	buffer[4] = kp_int&0xFF; 					// KP Low 8 bits
 	buffer[5] = kd_int>>4; 						// Kd High 8 bits
