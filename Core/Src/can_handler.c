@@ -36,4 +36,12 @@ void sendCanFrame(CAN_HandleTypeDef* hcan_, uint8_t can_id, CanHandler* can_hand
     HAL_CAN_AddTxMessage(hcan_, &can_handler->txHeader, frame, &can_handler->txMailbox);
 }
 
+void receiveCanFrame(CAN_HandleTypeDef *hcan, CanHandler* can_handler)
+{
+    if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &can_handler->rxHeader, can_handler->rxData) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
 

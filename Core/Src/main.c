@@ -118,11 +118,17 @@ int main(void)
   initCanHandler(&motor1, 8, can_id, CAN_ID_STD, CAN_RTR_DATA, can_id, DISABLE);
   HAL_CAN_Start(&hcan1);
 
+  if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   HAL_UART_Receive_IT(&huart2, serial_received_data, 23);
 
   while (1)
   {
     HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_14);
+    
 
     /* USER CODE END WHILE */
 
@@ -190,9 +196,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART2)
   {
     can_id = serial_received_data[0];
-    char msg[10];
-    sprintf(msg, "Can id: %d", can_id);
-    HAL_UART_Transmit(&huart1, msg, 10, HAL_MAX_DELAY);
+    char msg[20];
+    sprintf(msg, "Can id: %d\r\n", can_id);
+    HAL_UART_Transmit(&huart1, msg, 20, HAL_MAX_DELAY);
 
     float p_des, v_des, kp, kd, t_ff;
 
@@ -231,9 +237,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 
 
-      char msg[64];
-      sprintf((char*)msg, "p: %d\n\r", p_des);
-      HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 1000);
+      // char msg[64];
+      // sprintf((char*)msg, "p: %d\n\r", p_des);
+      // HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), 1000);
       
 
       uint8_t frame[8];
@@ -250,6 +256,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
     HAL_UART_Receive_IT(&huart2, serial_received_data, 23);
   }
+}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+  receiveCanFrame(hcan, &motor1);
+
+  char msg[64];
+  sprintf((char*)msg, "Received CAN id: %d, %d, %d, %d, %d, %d, %d, %d\r\n", motor1.rxData[0], motor1.rxData[1], motor1.rxData[2], motor1.rxData[3], motor1.rxData[4], motor1.rxData[5], motor1.rxData[6], motor1.rxData[7]);
+  HAL_UART_Transmit(&huart1, (char*)msg, 64, HAL_MAX_DELAY);
 }
 
 /* USER CODE END 4 */

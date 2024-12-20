@@ -27,6 +27,7 @@ typedef struct
 void defaultInitialization(CanHandler* can_handler);
 void initCanHandler(CanHandler* can_handler, uint32_t dlc, uint32_t ext_id, uint32_t ide, uint32_t rtr, uint32_t std_id, FunctionalState transmit_global_time);
 void sendCanFrame(CAN_HandleTypeDef* hcan_, uint8_t can_id, CanHandler* can_handler, uint8_t* frame);
+void receiveCanFrame(CAN_HandleTypeDef *hcan, CanHandler* can_handler);
 
 
 #endif
