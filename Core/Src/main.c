@@ -108,6 +108,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CAN1_Init();
   MX_USART2_UART_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -265,6 +266,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
   char msg[64];
   sprintf((char*)msg, "Received CAN id: %d, %d, %d, %d, %d, %d, %d, %d\r\n", motor1.rxData[0], motor1.rxData[1], motor1.rxData[2], motor1.rxData[3], motor1.rxData[4], motor1.rxData[5], motor1.rxData[6], motor1.rxData[7]);
   HAL_UART_Transmit(&huart1, (char*)msg, 64, HAL_MAX_DELAY);
+
+  HAL_UART_Transmit(&huart5, motor1.rxData, 8, HAL_MAX_DELAY);
 }
 
 /* USER CODE END 4 */
